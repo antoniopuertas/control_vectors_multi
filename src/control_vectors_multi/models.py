@@ -13,6 +13,8 @@ class ChatTemplateType(Enum):
     """Supported chat template formats."""
     CHATML = "chatml"       # Qwen-style: <|im_start|>, <|im_end|>
     OLMO = "olmo"           # OLMo-style: <|user|>, <|assistant|>
+    LLAMA3 = "llama3"       # Llama 3 style: <|start_header_id|>, <|end_header_id|>
+    MISTRAL = "mistral"     # Mistral/Mixtral style: [INST], [/INST]
 
 
 @dataclass(frozen=True)
@@ -72,16 +74,101 @@ MODEL_REGISTRY: Dict[str, ModelConfig] = {
         recommended_layers=(0.45, 0.85),
         notes="AI2's OLMo 2 model",
     ),
+
+    # =========================================================================
+    # LARGE MODELS FOR INTROSPECTION RESEARCH (require significant VRAM)
+    # =========================================================================
+
+    # Llama 3.1 70B Instruct - Primary candidate for introspection
+    "llama3.1-70b": ModelConfig(
+        model_id="meta-llama/Llama-3.1-70B-Instruct",
+        name="Llama-3.1-70B",
+        num_layers=80,
+        template_type=ChatTemplateType.LLAMA3,
+        user_tag="<|start_header_id|>user<|end_header_id|>\n\n",
+        asst_tag="<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+        vram_gb=140.0,
+        recommended_layers=(0.45, 0.85),
+        notes="Large model for introspection research - requires ~140GB VRAM",
+    ),
+
+    # Qwen3 Next 80B A3B Instruct - MoE model
+    "qwen3-80b": ModelConfig(
+        model_id="Qwen/Qwen3-Next-80B-A3B-Instruct",
+        name="Qwen3-80B-A3B",
+        num_layers=62,
+        template_type=ChatTemplateType.CHATML,
+        user_tag="<|im_start|>user\n",
+        asst_tag="<|im_end|>\n<|im_start|>assistant\n",
+        vram_gb=160.0,
+        recommended_layers=(0.45, 0.85),
+        notes="Qwen3 MoE - 80B total, 3B active params - requires ~160GB VRAM",
+    ),
+
+    # OLMo 3.1 32B Instruct - Mid-size open model
+    "olmo3.1-32b": ModelConfig(
+        model_id="allenai/OLMo-3.1-32B-Instruct",
+        name="OLMo-3.1-32B",
+        num_layers=64,
+        template_type=ChatTemplateType.OLMO,
+        user_tag="<|endoftext|><|user|>\n",
+        asst_tag="<|assistant|>\n",
+        vram_gb=64.0,
+        recommended_layers=(0.45, 0.85),
+        notes="AI2's OLMo 3.1 32B for introspection research",
+    ),
+
+    # Mixtral 8x22B Instruct - MoE architecture (sparse, more efficient)
+    "mixtral-8x22b": ModelConfig(
+        model_id="mistralai/Mixtral-8x22B-Instruct-v0.1",
+        name="Mixtral-8x22B",
+        num_layers=56,
+        template_type=ChatTemplateType.MISTRAL,
+        user_tag="[INST] ",
+        asst_tag=" [/INST]",
+        vram_gb=88.0,
+        recommended_layers=(0.45, 0.85),
+        notes="MoE model - 176B total params, ~44B active - requires ~88GB VRAM",
+    ),
+
+    # Llama 3.1 8B Instruct - Smaller baseline for comparison
+    "llama3.1-8b": ModelConfig(
+        model_id="meta-llama/Llama-3.1-8B-Instruct",
+        name="Llama-3.1-8B",
+        num_layers=32,
+        template_type=ChatTemplateType.LLAMA3,
+        user_tag="<|start_header_id|>user<|end_header_id|>\n\n",
+        asst_tag="<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+        vram_gb=16.0,
+        recommended_layers=(0.45, 0.85),
+        notes="Smaller Llama for baseline comparison - should NOT show introspection",
+    ),
 }
 
 # Alias mappings for convenience
 MODEL_ALIASES: Dict[str, str] = {
+    # Small models
     "qwen": "qwen2-1.5b",
     "qwen2": "qwen2-1.5b",
     "deepseek": "deepseek-r1-1.5b",
     "deepseek-r1": "deepseek-r1-1.5b",
     "olmo": "olmo2-7b",
     "olmo2": "olmo2-7b",
+    # Large models for introspection research
+    "llama70b": "llama3.1-70b",
+    "llama-70b": "llama3.1-70b",
+    "llama3-70b": "llama3.1-70b",
+    "qwen3": "qwen3-80b",
+    "qwen80b": "qwen3-80b",
+    "qwen-80b": "qwen3-80b",
+    "olmo32b": "olmo3.1-32b",
+    "olmo-32b": "olmo3.1-32b",
+    "olmo3": "olmo3.1-32b",
+    "mixtral": "mixtral-8x22b",
+    "mixtral-22b": "mixtral-8x22b",
+    "llama8b": "llama3.1-8b",
+    "llama-8b": "llama3.1-8b",
+    "llama3-8b": "llama3.1-8b",
 }
 
 

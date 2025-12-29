@@ -28,11 +28,25 @@ Control vectors are directions in a model's activation space that correspond to 
 
 ## Supported Models
 
+### Small Models (for experimentation)
+
 | Model | Key | Layers | VRAM | Notes |
 |-------|-----|--------|------|-------|
 | Qwen/Qwen2-1.5B-Instruct | `qwen`, `qwen2-1.5b` | 28 | ~3GB | Fast experimentation |
 | deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B | `deepseek`, `deepseek-r1-1.5b` | 28 | ~3GB | R1 distilled |
 | allenai/OLMo-2-1124-7B-Instruct | `olmo`, `olmo2-7b` | 32 | ~14GB | AI2's OLMo 2 |
+
+### Large Models (for introspection research)
+
+| Model | Key | Layers | VRAM | Notes |
+|-------|-----|--------|------|-------|
+| meta-llama/Llama-3.1-70B-Instruct | `llama70b`, `llama3.1-70b` | 80 | ~140GB | Primary introspection candidate |
+| Qwen/Qwen3-Next-80B-A3B-Instruct | `qwen3`, `qwen3-80b` | 62 | ~160GB | MoE (80B total, 3B active) |
+| allenai/OLMo-3.1-32B-Instruct | `olmo3`, `olmo3.1-32b` | 64 | ~64GB | AI2's OLMo 3.1 |
+| mistralai/Mixtral-8x22B-Instruct-v0.1 | `mixtral`, `mixtral-8x22b` | 56 | ~88GB | MoE (176B sparse) |
+| meta-llama/Llama-3.1-8B-Instruct | `llama8b`, `llama3.1-8b` | 32 | ~16GB | Baseline comparison |
+
+> **Note**: Large models require significant VRAM (160GB recommended for full suite).
 
 ## Installation
 
