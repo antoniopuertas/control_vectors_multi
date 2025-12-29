@@ -16,7 +16,7 @@ from .train import load_model_and_tokenizer
 
 def load_vector(path: Union[str, Path]) -> ControlVector:
     """Load a saved control vector."""
-    return torch.load(path)
+    return torch.load(path, map_location="cpu", weights_only=False)
 
 
 def create_controlled_model(
