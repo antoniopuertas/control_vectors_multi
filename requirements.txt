@@ -1,4 +1,5 @@
 torch>=2.0.0
 transformers>=4.36.0
-repeng>=0.2.0
+repeng
+accelerate
 numpy>=1.24.0

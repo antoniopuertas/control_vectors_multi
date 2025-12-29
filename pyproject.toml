@@ -7,13 +7,14 @@ name = "control-vectors-multi"
 version = "0.1.0"
 description = "Control vector training for multiple HuggingFace models"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 
 dependencies = [
     "torch>=2.0.0",
     "transformers>=4.36.0",
-    "repeng>=0.2.0",
+    "repeng",
+    "accelerate",
     "numpy>=1.24.0",
 ]
 

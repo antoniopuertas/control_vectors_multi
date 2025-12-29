@@ -10,6 +10,11 @@ Control vector training for multiple HuggingFace models using representation eng
 | deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B | `deepseek`, `deepseek-r1-1.5b` | 28 | ~3GB | R1 distilled |
 | allenai/OLMo-2-1124-7B-Instruct | `olmo`, `olmo2-7b` | 32 | ~14GB | AI2's OLMo 2 |
 
+## Requirements
+
+- Python >= 3.10
+- GPU with sufficient VRAM (see model table above)
+
 ## Installation
 
 ```bash
