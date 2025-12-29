@@ -2,6 +2,9 @@
 Training logic for control vectors.
 """
 
+# Apply compatibility patches before importing repeng
+from . import compat  # noqa: F401
+
 import torch
 from pathlib import Path
 from typing import List, Optional, Union, Tuple, Any

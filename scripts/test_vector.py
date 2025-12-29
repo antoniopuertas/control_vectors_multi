@@ -14,6 +14,9 @@ from pathlib import Path
 # Add src to path for development
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+# Apply repeng compatibility patches first
+from control_vectors_multi import compat  # noqa: F401
+
 from repeng import ControlModel
 
 from control_vectors_multi.models import list_models, get_recommended_layers

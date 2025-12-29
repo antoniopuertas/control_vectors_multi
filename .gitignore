@@ -53,6 +53,13 @@ dmypy.json
 vectors/*.pt
 vectors/*.gguf
 
+# Captured activations
+activations/*.pt
+activations/*.json
+
+# Claude Code settings
+.claude/
+
 # Model cache
 *.bin
 *.safetensors

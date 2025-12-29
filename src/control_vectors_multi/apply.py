@@ -2,6 +2,9 @@
 Utilities for applying trained control vectors.
 """
 
+# Apply compatibility patches before importing repeng
+from . import compat  # noqa: F401
+
 import torch
 from pathlib import Path
 from typing import Union, Optional, Any, Tuple
