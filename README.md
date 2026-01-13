@@ -58,6 +58,47 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+### CUDA Compatibility
+
+This toolkit requires matching PyTorch CUDA version with your GPU driver. Check your driver's CUDA version:
+
+```bash
+nvidia-smi  # Look for "CUDA Version" in the output
+```
+
+Then install the appropriate PyTorch version:
+
+```bash
+# For CUDA 12.1
+pip install torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu121
+
+# For CUDA 12.4
+pip install torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu124
+
+# For CUDA 12.6+ (newer drivers like H100 with CUDA 13.0)
+pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu126
+```
+
+### Recommended Environment Setup
+
+For a clean installation (recommended):
+
+```bash
+conda create -n control_vectors python=3.11 -y
+conda activate control_vectors
+
+# Install PyTorch first (match your CUDA version)
+pip install torch>=2.4.0 --index-url https://download.pytorch.org/whl/cu121
+
+# Install other dependencies
+pip install transformers>=4.45.0 accelerate>=0.26.0 numpy>=1.24.0 scikit-learn
+pip install repeng --no-deps
+pip install gguf tqdm matplotlib
+
+# Install this package
+pip install -e .
+```
+
 ## Quick Start
 
 ### 1. Train a Control Vector
@@ -194,6 +235,55 @@ input             Path to .pt activation file
 --no-plot         Text summary only (no GUI)
 --concept         Concept name for labels
 ```
+
+## Troubleshooting
+
+### Gibberish Output / Model Produces Random Tokens
+
+If the model generates nonsensical output (e.g., `!!!!!!!!` or random characters), this is usually a **CUDA version mismatch**:
+
+1. Check your GPU driver's CUDA version: `nvidia-smi`
+2. Check PyTorch's CUDA version: `python -c "import torch; print(torch.version.cuda)"`
+3. If they don't match closely, reinstall PyTorch with the correct CUDA version (see Installation section)
+
+**Quick test** to verify your setup works:
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2-1.5B-Instruct", torch_dtype=torch.float32).cuda()
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2-1.5B-Instruct")
+
+inputs = tokenizer("The capital of France is", return_tensors="pt").to("cuda")
+out = model.generate(**inputs, max_new_tokens=10, do_sample=False)
+print(tokenizer.decode(out[0]))  # Should mention "Paris"
+```
+
+### NaN Values During Training
+
+If you see `ValueError: Input X contains NaN`, this indicates numerical instability:
+
+- Try using `torch_dtype=torch.float32` instead of `bfloat16`
+- Ensure CUDA versions match (see above)
+- On newer GPUs (H100, etc.), use PyTorch nightly with CUDA 12.6+
+
+### Package Version Conflicts
+
+The `repeng` package requires `numpy<2.0.0`. If you see numpy conflicts:
+
+```bash
+pip install numpy>=1.24.0,<2.0.0
+pip install repeng --no-deps
+```
+
+### Model Loading Issues
+
+If models fail to load or produce errors with `trust_remote_code`:
+
+- The toolkit now loads models without `trust_remote_code=True` by default
+- This improves compatibility with newer GPU drivers
+- If a specific model requires custom code, you may need to modify `train.py`
 
 ## References
 

@@ -42,26 +42,19 @@ def load_model_and_tokenizer(
 
     # Determine dtype
     if torch_dtype is None:
-        if device == "cpu":
-            torch_dtype = torch.float32
-        else:
-            torch_dtype = torch.float16
+        torch_dtype = torch.float32
 
-    # Handle device mapping
-    if device == "cpu":
-        model = AutoModelForCausalLM.from_pretrained(
-            config.model_id,
-            torch_dtype=torch_dtype,
-            trust_remote_code=True,
-        )
-        model = model.to(device)
-    else:
-        model = AutoModelForCausalLM.from_pretrained(
-            config.model_id,
-            torch_dtype=torch_dtype,
-            device_map=device,
-            trust_remote_code=True,
-        )
+    # Load model without device_map (causes issues with some GPU/driver combos)
+    # and without trust_remote_code (can cause computation errors)
+    model = AutoModelForCausalLM.from_pretrained(
+        config.model_id,
+        torch_dtype=torch_dtype,
+    )
+
+    # Move to device
+    if device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = model.to(device)
 
     return model, tokenizer, config
 

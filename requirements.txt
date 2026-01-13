@@ -1,6 +1,9 @@
-torch>=2.0.0
-transformers>=4.36.0
-repeng
-accelerate
-numpy>=1.24.0
+torch>=2.4.0
+transformers>=4.45.0,<4.57.0
+repeng>=0.4.0
+accelerate>=0.26.0
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.0.0
 matplotlib>=3.7.0
+tqdm
+gguf

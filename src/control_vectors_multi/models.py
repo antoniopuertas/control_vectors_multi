@@ -105,14 +105,14 @@ MODEL_REGISTRY: Dict[str, ModelConfig] = {
         notes="Qwen3 MoE - 80B total, 3B active params - requires ~160GB VRAM",
     ),
 
-    # OLMo 3.1 32B Instruct - Mid-size open model
+    # OLMo 3.1 32B Instruct - Mid-size open model (uses ChatML, not OLMo format)
     "olmo3.1-32b": ModelConfig(
         model_id="allenai/OLMo-3.1-32B-Instruct",
         name="OLMo-3.1-32B",
         num_layers=64,
-        template_type=ChatTemplateType.OLMO,
-        user_tag="<|endoftext|><|user|>\n",
-        asst_tag="<|assistant|>\n",
+        template_type=ChatTemplateType.CHATML,
+        user_tag="<|im_start|>user\n",
+        asst_tag="<|im_end|>\n<|im_start|>assistant\n",
         vram_gb=64.0,
         recommended_layers=(0.45, 0.85),
         notes="AI2's OLMo 3.1 32B for introspection research",
