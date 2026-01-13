@@ -7,3 +7,5 @@ scikit-learn>=1.0.0
 matplotlib>=3.7.0
 tqdm
 gguf
+sentencepiece
+protobuf

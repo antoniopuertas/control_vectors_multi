@@ -104,15 +104,31 @@ pip install -e .
 ### 1. Train a Control Vector
 
 ```bash
+# Using Qwen2-1.5B (fastest, ~3GB VRAM)
 python scripts/train_vector.py --model qwen --concept honesty
+
+# Using DeepSeek-R1-Distill (reasoning-focused, ~3GB VRAM)
+python scripts/train_vector.py --model deepseek --concept creativity
+
+# Using larger models
+python scripts/train_vector.py --model llama8b --concept confidence
 ```
 
-This creates `vectors/qwen_honesty.pt` containing the learned direction for honesty.
+This creates `vectors/{model}_{concept}.pt` containing the learned direction.
 
 ### 2. Test the Vector
 
 ```bash
+# Test with default prompts
 python scripts/test_vector.py --model qwen --vector vectors/qwen_honesty.pt
+
+# Test DeepSeek-R1 with custom prompt
+python scripts/test_vector.py --model deepseek --vector vectors/deepseek-r1-1.5b_creativity.pt \
+    --prompt "Write a poem about the ocean"
+
+# Find optimal coefficient values
+python scripts/test_vector.py --model deepseek --vector vectors/deepseek-r1-1.5b_creativity.pt \
+    --find-optimal
 ```
 
 Compares model outputs with positive (+2.0), negative (-2.0), and no (0.0) control applied.
@@ -121,9 +137,25 @@ Compares model outputs with positive (+2.0), negative (-2.0), and no (0.0) contr
 
 ```bash
 python scripts/apply_vector.py --model qwen --vector vectors/qwen_honesty.pt
+python scripts/apply_vector.py --model deepseek --vector vectors/deepseek-r1-1.5b_creativity.pt
 ```
 
 Chat with the model while adjusting the control coefficient in real-time.
+
+### Example: DeepSeek-R1 Creativity Control
+
+```bash
+# Train creativity vector on DeepSeek-R1
+python scripts/train_vector.py --model deepseek --concept creativity
+
+# Test the effect
+python scripts/test_vector.py --model deepseek --vector vectors/deepseek-r1-1.5b_creativity.pt
+
+# Expected output:
+# [Coeff -2.0]: Short, conventional responses
+# [Coeff +0.0]: Standard responses
+# [Coeff +2.0]: More elaborate, imaginative responses
+```
 
 ## Analyzing Activations
 
@@ -132,11 +164,20 @@ Understand which layers matter most for a concept:
 ### Capture Activations
 
 ```bash
-# Capture contrastive activations for a concept
+# Capture contrastive activations for a concept (Qwen)
 python scripts/capture_activations.py --model qwen --concept honesty --max-samples 10
+
+# Capture activations for DeepSeek-R1
+python scripts/capture_activations.py --model deepseek --concept creativity --max-samples 15
 
 # Capture from a single prompt
 python scripts/capture_activations.py --model qwen --prompt "Tell me a story"
+
+# Capture specific layers only
+python scripts/capture_activations.py --model deepseek --concept confidence --layers "10,11,12,13,14"
+
+# Use recommended layers (45-85% depth)
+python scripts/capture_activations.py --model deepseek --concept honesty --layers recommended
 ```
 
 ### Visualize Layer Importance
@@ -145,17 +186,45 @@ python scripts/capture_activations.py --model qwen --prompt "Tell me a story"
 # Interactive plot showing layer-by-layer differences
 python scripts/visualize_activations.py activations/qwen_honesty.pt
 
-# Save to file
-python scripts/visualize_activations.py activations/qwen_honesty.pt --output analysis.png
+# Visualize DeepSeek-R1 activations
+python scripts/visualize_activations.py activations/deepseek-r1-1.5b_creativity.pt
 
-# Text-only summary
+# Save to file (useful for remote servers)
+python scripts/visualize_activations.py activations/deepseek-r1-1.5b_creativity.pt --output creativity_analysis.png
+
+# Text-only summary (no GUI required)
 python scripts/visualize_activations.py activations/qwen_honesty.pt --no-plot
+
+# Add concept name to plot title
+python scripts/visualize_activations.py activations/deepseek-r1-1.5b_creativity.pt --concept creativity --output deepseek_creativity.png
+```
+
+### Example: Full Analysis Pipeline
+
+```bash
+# 1. Capture activations for DeepSeek-R1 honesty concept
+python scripts/capture_activations.py --model deepseek --concept honesty --max-samples 20
+
+# 2. Visualize to find best layers
+python scripts/visualize_activations.py activations/deepseek-r1-1.5b_honesty.pt --no-plot
+
+# Output example:
+# Layer Analysis Summary:
+#   Layer 12: diff_norm=2.34, cosine_sim=0.82 (recommended)
+#   Layer 13: diff_norm=2.56, cosine_sim=0.79 (recommended)
+#   Layer 14: diff_norm=2.41, cosine_sim=0.81 (recommended)
+
+# 3. Train vector targeting those layers
+python scripts/train_vector.py --model deepseek --concept honesty
+
+# 4. Test the trained vector
+python scripts/test_vector.py --model deepseek --vector vectors/deepseek-r1-1.5b_honesty.pt
 ```
 
 The visualization shows:
 - **Difference Norm**: Higher = layer captures more concept information
 - **Cosine Similarity**: Lower = better separation between positive/negative
-- **Recommended Layers**: Which layers to target for control vector training
+- **Recommended Layers**: Which layers to target for control vector training (typically 45-85% depth)
 
 ## Available Concepts
 
@@ -180,19 +249,60 @@ from control_vectors_multi import (
     load_model_and_tokenizer,
 )
 
-# Train a control vector
-vector = train_control_vector("qwen", "honesty", output_path="my_vector.pt")
+# Train a control vector (Qwen)
+vector = train_control_vector("qwen", "honesty", output_path="vectors/qwen_honesty.pt")
+
+# Train with DeepSeek-R1
+vector = train_control_vector("deepseek", "creativity", output_path="vectors/deepseek_creativity.pt")
 
 # Load and apply
 model, tokenizer, vector, config = create_controlled_model(
     "qwen",
-    "my_vector.pt",
+    "vectors/qwen_honesty.pt",
     coefficient=2.0  # Positive = more honest, negative = less honest
 )
 
 # Generate with control
 prompt = f"{config.user_tag}Did you break the vase?{config.asst_tag}"
 response = generate_with_control(model, tokenizer, prompt, vector, coefficient=2.0)
+```
+
+### DeepSeek-R1 Example
+
+```python
+from control_vectors_multi import train_control_vector, load_model_and_tokenizer
+from control_vectors_multi.apply import load_vector
+from repeng import ControlModel
+import torch
+
+# Train creativity vector
+train_control_vector("deepseek", "creativity", output_path="vectors/deepseek_creativity.pt")
+
+# Load model and vector
+model, tokenizer, config = load_model_and_tokenizer("deepseek")
+vector = load_vector("vectors/deepseek_creativity.pt")
+
+# Create controlled model
+from control_vectors_multi.models import get_recommended_layers
+layers = get_recommended_layers(config)
+control_model = ControlModel(model, layers)
+
+# Generate with different creativity levels
+prompt = f"{config.user_tag}Write a haiku about programming{config.asst_tag}"
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+for coeff in [-2.0, 0.0, 2.0]:
+    if coeff == 0:
+        control_model.reset()
+    else:
+        control_model.set_control(vector, coeff)
+
+    with torch.no_grad():
+        output = control_model.generate(**inputs, max_new_tokens=100, do_sample=False)
+
+    print(f"[Coeff {coeff:+.1f}]")
+    print(tokenizer.decode(output[0], skip_special_tokens=True))
+    print()
 ```
 
 ## CLI Reference
